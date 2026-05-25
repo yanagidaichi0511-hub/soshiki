@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>判例フラッシュカード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700&family=Noto+Sans+JP:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --serif: 'Noto Serif JP', serif;
+  --sans:  'Noto Sans JP', sans-serif;
+  --c-red:    #8b3a2a;
+  --c-teal:   #2a6b5a;
+  --c-amber:  #7a5a1a;
+  --c-blue:   #2a4a7a;
+  --c-purple: #4a3a7a;
+  --c-red-l:  #f5ebe6;
+  --c-teal-l: #e5f2ee;
+  --c-amb-l:  #faf0d8;
+  --c-blue-l: #e8eef8;
+  --c-pur-l:  #eeebf6;
+  --ink:   #1a1714;
+  --ink-4: #b0a89e;
+  --paper: #faf8f5;
+  --paper-2: #f2ede6;
+  --border: #d8d0c4;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: var(--sans);
+  background: #1a1714;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Stage with overflow clip for slide ── */
+.stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 24px 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Outer wrapper just for sizing */
+.card-sizer {
+  width: 100%;
+  max-width: 860px;
+  height: 100%;
+  position: relative;
+}
+
+/* The sliding + flipping element */
+.card-wrap {
+  width: 100%;
+  height: 100%;
+  perspective: 1600px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .55s cubic-bezier(.45,.05,.55,.95);
+  border-radius: 20px;
+}
+.card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+
+/* Slide animations */
+@keyframes slide-out-left  { from { transform: translateX(0); opacity:1; } to { transform: translateX(-110%); opacity:0; } }
+@keyframes slide-out-right { from { transform: translateX(0); opacity:1; } to { transform: translateX( 110%); opacity:0; } }
+@keyframes slide-in-right  { from { transform: translateX( 110%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+@keyframes slide-in-left   { from { transform: translateX(-110%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+
+.card-wrap.anim-out-left  { animation: slide-out-left  .28s cubic-bezier(.4,0,.6,1) forwards; pointer-events:none; }
+.card-wrap.anim-out-right { animation: slide-out-right .28s cubic-bezier(.4,0,.6,1) forwards; pointer-events:none; }
+.card-wrap.anim-in-right  { animation: slide-in-right  .32s cubic-bezier(.2,0,.2,1) forwards; }
+.card-wrap.anim-in-left   { animation: slide-in-left   .32s cubic-bezier(.2,0,.2,1) forwards; }
+
+/* ── Card faces ── */
+.card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.5rem, 5vw, 3.5rem) clamp(1.5rem, 7vw, 5rem);
+  text-align: center;
+}
+
+/* Front */
+.card-front {
+  background: var(--paper);
+  border: 2px solid var(--border);
+}
+.front-corner {
+  position: absolute;
+  top: 20px; left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.front-num {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--ink-4);
+  text-transform: uppercase;
+}
+.front-cat {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+.front-q {
+  font-family: var(--serif);
+  font-size: clamp(18px, 2.8vw, 28px);
+  font-weight: 700;
+  line-height: 2;
+  color: var(--ink);
+}
+.front-hint {
+  position: absolute;
+  bottom: 20px;
+  right: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-4);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Back */
+.card-back { transform: rotateY(180deg); }
+.back-corner {
+  position: absolute;
+  top: 20px; left: 24px;
+}
+.back-num {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  opacity: .45;
+  text-transform: uppercase;
+}
+.back-eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: .6;
+  margin-bottom: 1.25rem;
+}
+.back-name {
+  font-family: var(--serif);
+  font-size: clamp(26px, 5vw, 48px);
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 1.5rem;
+}
+.back-desc {
+  font-size: clamp(14px, 1.8vw, 18px);
+  font-weight: 500;
+  line-height: 1.9;
+  opacity: .8;
+  max-width: 540px;
+}
+
+/* Color themes */
+.theme-red    .card-back { background: var(--c-red);    color: #fff; }
+.theme-teal   .card-back { background: var(--c-teal);   color: #fff; }
+.theme-amber  .card-back { background: var(--c-amber);  color: #fff; }
+.theme-blue   .card-back { background: var(--c-blue);   color: #fff; }
+.theme-purple .card-back { background: var(--c-purple); color: #fff; }
+.theme-red    .front-cat { background: var(--c-red-l);  color: var(--c-red); }
+.theme-teal   .front-cat { background: var(--c-teal-l); color: var(--c-teal); }
+.theme-amber  .front-cat { background: var(--c-amb-l);  color: var(--c-amber); }
+.theme-blue   .front-cat { background: var(--c-blue-l); color: var(--c-blue); }
+.theme-purple .front-cat { background: var(--c-pur-l);  color: var(--c-purple); }
+
+/* ── Bottom bar ── */
+.bottom {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px 18px;
+  gap: 16px;
+}
+.nav-btn {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.06);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,.7);
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.nav-btn:hover:not(:disabled) { background: rgba(255,255,255,.14); color: #fff; }
+.nav-btn:disabled { opacity: 0.2; cursor: default; }
+.nav-btn svg { width: 22px; height: 22px; }
+.center-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+.prog-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 400px;
+}
+.prog-wrap {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.prog-fill {
+  height: 100%;
+  background: rgba(255,255,255,.5);
+  border-radius: 2px;
+  transition: width .4s ease;
+}
+.counter {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,.45);
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+.btn-row { display: flex; gap: 10px; }
+.flip-btn {
+  padding: 0 28px; height: 44px;
+  border-radius: 22px;
+  font-family: var(--sans);
+  font-size: 14px; font-weight: 700;
+  color: #1a1714; background: #fff;
+  border: none; cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: opacity .15s;
+}
+.flip-btn:hover { opacity: .88; }
+.shuffle-btn {
+  padding: 0 18px; height: 44px;
+  border-radius: 22px;
+  font-family: var(--sans);
+  font-size: 14px; font-weight: 700;
+  color: rgba(255,255,255,.7);
+  background: rgba(255,255,255,.08);
+  border: 1.5px solid rgba(255,255,255,.15);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.shuffle-btn:hover { background: rgba(255,255,255,.14); color: #fff; }
+
+@media (max-width: 500px) {
+  .stage { padding: 16px 16px 0; }
+  .bottom { padding: 10px 16px 14px; }
+  .flip-btn, .shuffle-btn { padding: 0 16px; font-size: 13px; }
+}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="card-sizer">
+    <div class="card-wrap" id="card" onclick="flipCard()">
+      <div class="card-inner" id="card-inner">
+        <div class="card-face card-front">
+          <div class="front-corner">
+            <span class="front-num" id="front-num">01</span>
+            <span class="front-cat" id="front-cat"></span>
+          </div>
+          <p class="front-q" id="front-q"></p>
+          <span class="front-hint">
+            タップして答えを見る
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 3v10M3 8l5 5 5-5"/>
+            </svg>
+          </span>
+        </div>
+        <div class="card-face card-back">
+          <div class="back-corner">
+            <span class="back-num" id="back-num">01</span>
+          </div>
+          <div class="back-eyebrow">判例名</div>
+          <div class="back-name" id="back-name"></div>
+          <div class="back-desc" id="back-desc"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom">
+  <button class="nav-btn" id="prev-btn" onclick="go(-1)" disabled title="前へ">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  </button>
+  <div class="center-controls">
+    <div class="prog-row">
+      <span class="counter" id="counter">1 / 8</span>
+      <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:12.5%"></div></div>
+    </div>
+    <div class="btn-row">
+      <button class="flip-btn" onclick="flipCard()">めくる</button>
+      <button class="shuffle-btn" onclick="shuffle()">シャッフル ↺</button>
+    </div>
+  </div>
+  <button class="nav-btn" id="next-btn" onclick="go(1)" title="次へ">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+const CARDS = [
+  { cat:"制度の趣旨・基本", theme:"theme-red",
+    q:"反対株主の株式買取請求制度の趣旨として「会社の基礎に本質的変更をもたらす行為の際に、反対株主に公正な価格を受け取って退出する機会を保障する」と判示した判例は？",
+    name:"楽天対TBS事件",
+    desc:"買取請求制度の根拠・趣旨を定立。裁判所が合理的裁量で公正な価格を決定することも示した。" },
+  { cat:"基準日", theme:"theme-red",
+    q:"組織再編における株式買取請求の「公正な価格の基準日は買取請求日である」と判示した判例は？",
+    name:"楽天対TBS事件",
+    desc:"買取請求があって初めて売買契約と同様の法律関係が生じるため、基準日は買取請求日とされた。" },
+  { cat:"ナカリセバ価格", theme:"theme-red",
+    q:"企業価値の増加が生じない場合の「公正な価格」は「ナカリセバ価格」（組織再編がなかった場合に株式が有していたであろう価格）であると判示した判例は？",
+    name:"楽天対TBS事件",
+    desc:"独立当事者間取引では特段の事情なき限り市場株価で算定できるとも判示した。" },
+  { cat:"公正分配価格", theme:"theme-amber",
+    q:"企業価値の増加が生じる場合の「公正な価格」は「公正分配価格」（増加分が各株主に公正に分配された場合の価格）であると判示した判例は？",
+    name:"テクモ事件",
+    desc:"企業価値増加あり／なしで価格算定方式が変わるという二類型の一方を確立した判例。" },
+  { cat:"基準日（全部取得条項）", theme:"theme-teal",
+    q:"全部取得条項付種類株式を用いたキャッシュ・アウトにおける公正な価格の基準日は「取得日」であると判示した判例は？",
+    name:"レックス・ホールディングス事件",
+    desc:"補足意見では、組織再編以外のキャッシュ・アウトにも同様の価格算定方式が適用されることも示された。" },
+  { cat:"利害関係者間取引", theme:"theme-blue",
+    q:"MBO・親子会社間のような利害関係者間取引において、公正担保措置（MOM決議等）が実効的に機能した場合は特段の事情なき限り市場株価で算定できると判示した判例は？",
+    name:"ジュピターテレコム事件",
+    desc:"公正担保措置が実効的に機能しなかった場合は裁判所が独自に算定することも示した。" },
+  { cat:"二段階買収・強圧性", theme:"theme-purple",
+    q:"二段階買収において少数株主が受け取る対価が公開買付より低い場合は強圧性の問題が生じるとし、特段の事情がない限り公開買付より低い対価を設定してはならないと判示した判例は？",
+    name:"日興コーディアルグループ事件",
+    desc:"強圧性とは、株主が公開買付への応募を余儀なくされる圧力のこと。二段階買収の公正性確保を求めた。" },
+  { cat:"独立当事者間・算定方法", theme:"theme-red",
+    q:"独立当事者間の取引においては、M&A取引の萎縮を避ける必要から、総会での不実情報開示等の特段の事情がない限り市場株価によって公正な価格を算定できると判示した判例は？",
+    name:"楽天対TBS事件",
+    desc:"特段の事情がある場合は裁判所が独自に算定した方法で公正な価格を決定する。" }
+];
+
+let deck = [...CARDS];
+let cur = 0;
+let flipped = false;
+let animating = false;
+
+function applyCard(c) {
+  const n = cur + 1;
+  const numStr = String(n).padStart(2,'0');
+  document.getElementById('counter').textContent = n + ' / ' + deck.length;
+  document.getElementById('prog').style.width = (n / deck.length * 100) + '%';
+  document.getElementById('prev-btn').disabled = cur === 0;
+  document.getElementById('next-btn').disabled = cur === deck.length - 1;
+  document.getElementById('front-num').textContent = numStr;
+  document.getElementById('front-cat').textContent = c.cat;
+  document.getElementById('front-q').textContent = c.q;
+  document.getElementById('back-num').textContent = numStr;
+  document.getElementById('back-name').textContent = c.name;
+  document.getElementById('back-desc').textContent = c.desc;
+  const wrap = document.getElementById('card');
+  wrap.className = 'card-wrap ' + c.theme;
+  // keep flipped state class
+  if (flipped) wrap.classList.add('flipped');
+}
+
+function render() { applyCard(deck[cur]); }
+
+function flipCard() {
+  if (animating) return;
+  flipped = !flipped;
+  const wrap = document.getElementById('card');
+  if (flipped) wrap.classList.add('flipped');
+  else wrap.classList.remove('flipped');
+}
+
+function go(dir) {
+  if (animating) return;
+  const next = cur + dir;
+  if (next < 0 || next >= deck.length) return;
+  animating = true;
+
+  const wrap = document.getElementById('card');
+  const outClass = dir > 0 ? 'anim-out-left' : 'anim-out-right';
+  const inClass  = dir > 0 ? 'anim-in-right' : 'anim-in-left';
+
+  // reset flip silently before slide
+  flipped = false;
+  document.getElementById('card-inner').style.transition = 'none';
+  wrap.classList.remove('flipped');
+
+  wrap.classList.add(outClass);
+
+  setTimeout(() => {
+    // remove out anim, update content
+    wrap.classList.remove(outClass);
+    cur = next;
+    applyCard(deck[cur]);
+
+    // restore flip transition, start slide in
+    document.getElementById('card-inner').style.transition = '';
+    wrap.classList.add(inClass);
+
+    wrap.addEventListener('animationend', function handler() {
+      wrap.removeEventListener('animationend', handler);
+      wrap.classList.remove(inClass);
+      animating = false;
+    });
+  }, 290);
+}
+
+function shuffle() {
+  if (animating) return;
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  cur = 0; flipped = false;
+  const wrap = document.getElementById('card');
+  wrap.classList.remove('flipped');
+  render();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft')  go(-1);
+  if (e.key === 'ArrowRight') go(1);
+  if (e.key === ' ') { e.preventDefault(); flipCard(); }
+});
+
+render();
+</script>
+</body>
+</html>
